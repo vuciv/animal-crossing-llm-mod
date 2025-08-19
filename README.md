@@ -2,6 +2,8 @@
 
 **Transform Animal Crossing into an AI-powered conversation experience!** This mod uses Large Language Models to generate dynamic, contextual dialogue for villagers in real-time.
 
+> ⚠️ **EXPERIMENTAL SOFTWARE**: This mod has known bugs and is only tested on macOS. Use at your own risk! PRs welcome to help improve it.
+
 ## 🎥 What This Does
 
 Ever wanted to have meaningful conversations with your Animal Crossing villagers? This mod:
@@ -37,7 +39,8 @@ GENERATION_SUPPRESS_SECONDS=25
 ### 3. Run Animal Crossing in Dolphin
 - Download Dolphin emulator
 - Load Animal Crossing (GAFE01) ROM
-- Start the game and get to a conversation
+- **⚠️ IMPORTANT**: Start the game and wait until you're past the loading screen and in the actual game world
+- Get to a conversation with a villager
 
 ### 4. Launch the Mod
 ```bash
@@ -106,12 +109,41 @@ python ac_parser_encoder.py --dump
 - **API Costs**: OpenAI usage incurs charges, Google Gemini has free tier
 - **Game Compatibility**: Tested with Animal Crossing (GAFE01) version
 
+## ⚠️ Known Issues & Limitations
+
+- **🪲 Some Obvious Bugs**: This is a work-in-progress mod with known issues
+- **🖥️ Platform Testing**: Only tested on macOS - Windows/Linux may have compatibility issues
+- **🎮 Timing Critical**: Must start the mod AFTER entering the game world (past loading screen)
+- **💾 Memory Stability**: May occasionally crash or behave unexpectedly
+- **🔧 Experimental**: This is experimental software - use at your own risk!
+
+## 🐛 Bug Reports & Contributions
+
+**PRs are welcome!** This mod needs help from the community to improve:
+- Fix platform compatibility issues
+- Resolve known bugs and crashes
+- Improve memory reading stability
+- Add new features and LLM providers
+- Test on different game versions and platforms
+
+Found a bug? Want to help? Open an issue or submit a pull request!
+
 ## 🤝 Contributing
 
-Found a bug? Want to add features? Contributions welcome!
-- Report issues with game versions and error messages
-- Suggest new LLM providers or dialogue styles
-- Help improve the character mapping and control codes
+Found a bug? Want to add features? **Contributions are very welcome!** This mod needs community help to become stable.
+
+**Most Needed:**
+- 🐛 **Bug Fixes**: Fix crashes, memory issues, and platform compatibility
+- 🖥️ **Platform Support**: Test and fix Windows/Linux compatibility issues
+- 🎮 **Game Versions**: Test with different Animal Crossing versions
+- 📱 **UI Improvements**: Better error handling and user feedback
+- 🧪 **Testing**: Help test on different systems and configurations
+
+**How to Help:**
+- Report issues with detailed error messages and system info
+- Test on different platforms (Windows, Linux, different macOS versions)
+- Submit pull requests with fixes and improvements
+- Help improve documentation and setup instructions
 
 ---
 
