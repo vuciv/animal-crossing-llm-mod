@@ -1,0 +1,20 @@
+# Animal Crossing LLM Mod - Environment Variables
+# Copy this file to .env and fill in your API keys
+
+# Choose ONE of these API providers:
+
+# Google Gemini (FREE tier available)
+GOOGLE_API_KEY=your_gemini_api_key_here
+
+# OpenAI (Paid service)
+# OPENAI_API_KEY=your_openai_api_key_here
+
+# Optional Features (set to 1 to enable, 0 to disable)
+ENABLE_SCREENSHOT=1          # Capture screenshots for context
+ENABLE_GOSSIP=1              # Villagers remember past conversations
+GENERATION_SUPPRESS_SECONDS=25  # Cooldown between generations
+
+# Advanced Settings (usually don't need to change)
+# TARGET_ADDRESS=0x81298360  # Memory address for dialogue
+# READ_SIZE=512              # Bytes to read per iteration
+# MAX_READ_SIZE=8192         # Maximum bytes to read

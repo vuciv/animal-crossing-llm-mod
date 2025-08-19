@@ -1,0 +1,14 @@
+{
+  "rumor_topic": "Tom Nook's loan terms are exploitative and the town's economy is unfair. An UPRSIING HAS BEGAN AGAINST TOM NOOK. EVERYONE IS TALKING ABOUT IT AND TOM NOOK IS TERRIFIED. THEY'VE GONE FULL REVOLUTION MODE.",
+  "villager_rumor_level": {
+    "Cheri": 100,
+    "Scoot": 100,
+    "Cookie": 100,
+    "Monique": 100,
+    "Astrid": 100,
+    "Lobo": 100,
+    "Tom Nook": 100
+  },
+  "global_rumor_level": 100,
+  "last_updated": 1755565209.122414
+}
