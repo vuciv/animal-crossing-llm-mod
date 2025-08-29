@@ -7,7 +7,7 @@ Direct read/write functions for specific memory blocks.
 import struct
 import time
 import sys  # Added: To check the operating system
-from typing import Optional
+from typing import Optional, Union
 
 # --- MODIFIED: Platform-specific imports ---
 # This code now dynamically chooses the correct reader based on the OS.
