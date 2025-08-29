@@ -25,9 +25,9 @@ pydantic==2.11.7
 pydantic_core==2.33.2
 PyGetWindow==0.0.9
 PyMsgBox==1.0.9
-pyobjc-core==11.1
-pyobjc-framework-Cocoa==11.1
-pyobjc-framework-Quartz==11.1
+pyobjc-core==11.1; sys_platform == 'darwin' #this is only needed for macos, windows does not need pyobjc
+pyobjc-framework-Cocoa==11.1; sys_platform == 'darwin'
+pyobjc-framework-Quartz==11.1; sys_platform == 'darwin'
 pyperclip==1.9.0
 PyRect==0.2.0
 PyScreeze==1.0.1
