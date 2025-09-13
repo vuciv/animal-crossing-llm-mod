@@ -73,6 +73,7 @@ class FandomVillagerScraper:
         if not self.cache_dir:
             return None
         safe = re.sub(r"[^a-zA-Z0-9_.-]", "_", key)
+        safe = safe.rstrip(".")
         return os.path.join(self.cache_dir, safe)
 
     def _get(self, url: str) -> str:
