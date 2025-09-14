@@ -571,13 +571,13 @@ def get_model_provider(model: Optional[str] = None):
         raise RuntimeError("Must define either GOOGLE_API_KEY or OPENAI_API_KEY in environment")
 
 
-def call_llm(prompt: str, model: Optional[str] = None, image_paths: Optional[List[str]] = None) -> str:
+def call_llm(prompt: str, model: Optional[str] = None, temperature: float = 1.0, max_tokens: int = 512, image_paths: Optional[List[str]] = None) -> str:
     model_provider = get_model_provider(model)
 
     if model_provider == "google":
-        return call_llm_gemini(prompt=prompt, model=model, image_paths=image_paths)
+        return call_llm_gemini(prompt=prompt, model=model, temperature=temperature, image_paths=image_paths)
     elif model_provider == "openai":
-        return call_llm_openai(prompt=prompt, model=model, image_paths=image_paths)
+        return call_llm_openai(prompt=prompt, model=model, temperature=temperature, image_paths=image_paths)
     else:
         raise ValueError("Invalid model provider")
 
