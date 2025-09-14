@@ -551,6 +551,26 @@ def call_llm_openai(prompt: str, model: Optional[str] = None, temperature: float
     return resp.output_text
 
 
+def call_llm(prompt: str, model: Optional[str] = None, image_paths: Optional[List[str]] = None) -> str:
+    model_provider = os.environ.get("MODEL_PROVIDER", "google").lower()
+
+    def model_starts_with(model: Optional[str], prefix: str) -> bool:
+        return model and model.lower().startswith(prefix.lower())
+
+    if (
+        (model_starts_with(model, "gemini") or model_provider == "google")
+        and os.environ.get("GOOGLE_API_KEY") is not None
+    ):
+        return call_llm_gemini(prompt=prompt, model=model, image_paths=image_paths)
+    elif (
+        (model_starts_with(model, "openai") or model_provider == "openai")
+        and os.environ.get("OPENAI_API_KEY") is not None
+    ):
+        return call_llm_openai(prompt=prompt, model=model, image_paths=image_paths)
+    else:
+        raise ValueError("Must define either GOOGLE_API_KEY or OPENAI_API_KEY in environment")
+
+
 def _format_control_code_decorator_prompt(raw_lines: str) -> str:
     """Builds a prompt for a second LLM to add safe control codes to the lines.
 
@@ -659,7 +679,7 @@ def generate_dialogue(
     )
     if dry_run:
         return prompt
-    base = call_llm_gemini(prompt=prompt, model=model, image_paths=image_paths)
+    base = call_llm(prompt=prompt, model=model, image_paths=image_paths)
     if not decorate:
         result = base
     else:
@@ -707,7 +727,7 @@ def generate_spotlight_dialogue(
     )
     if dry_run:
         return prompt
-    base = call_llm_gemini(prompt=prompt, model=model, image_paths=image_paths)
+    base = call_llm(prompt=prompt, model=model, image_paths=image_paths)
     if not decorate:
         # Ensure manual control code at end
         result = base.rstrip() + LOAD_GAME_CODE
