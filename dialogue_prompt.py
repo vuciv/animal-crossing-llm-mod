@@ -551,7 +551,7 @@ def call_llm_openai(prompt: str, model: Optional[str] = None, temperature: float
     return resp.output_text
 
 
-def call_llm(prompt: str, model: Optional[str] = None, image_paths: Optional[List[str]] = None) -> str:
+def get_model_provider(model: Optional[str] = None):
     model_provider = os.environ.get("MODEL_PROVIDER", "google").lower()
 
     def model_starts_with(model: Optional[str], prefix: str) -> bool:
@@ -561,14 +561,25 @@ def call_llm(prompt: str, model: Optional[str] = None, image_paths: Optional[Lis
         (model_starts_with(model, "gemini") or model_provider == "google")
         and os.environ.get("GOOGLE_API_KEY") is not None
     ):
-        return call_llm_gemini(prompt=prompt, model=model, image_paths=image_paths)
+        return "google"
     elif (
         (model_starts_with(model, "openai") or model_provider == "openai")
         and os.environ.get("OPENAI_API_KEY") is not None
     ):
+        return "openai"
+    else:
+        raise RuntimeError("Must define either GOOGLE_API_KEY or OPENAI_API_KEY in environment")
+
+
+def call_llm(prompt: str, model: Optional[str] = None, image_paths: Optional[List[str]] = None) -> str:
+    model_provider = get_model_provider(model)
+
+    if model_provider == "google":
+        return call_llm_gemini(prompt=prompt, model=model, image_paths=image_paths)
+    elif model_provider == "openai":
         return call_llm_openai(prompt=prompt, model=model, image_paths=image_paths)
     else:
-        raise ValueError("Must define either GOOGLE_API_KEY or OPENAI_API_KEY in environment")
+        raise ValueError("Invalid model provider")
 
 
 def _format_control_code_decorator_prompt(raw_lines: str) -> str:
@@ -622,6 +633,16 @@ def _format_control_code_decorator_prompt(raw_lines: str) -> str:
     return f"Input lines (verbatim):\n{raw_lines}\n\nInstructions:\n{guidelines}\n\nNow return the decorated lines in order:"
 
 
+def get_decorator_model() -> Optional[str]:
+    # Allow overriding the model specifically for decoration via env
+    model_provider = get_model_provider()
+    if model_provider == "google":
+        return os.environ.get("GOOGLE_MODEL_DECORATOR") or os.environ.get("GOOGLE_MODEL")
+    elif model_provider == "openai":
+        return os.environ.get("OPENAI_MODEL_DECORATOR") or os.environ.get("OPENAI_MODEL")
+    return None
+
+
 def decorate_dialogue_with_control_codes(
     text: str,
     model: Optional[str] = None,
@@ -638,9 +659,8 @@ def decorate_dialogue_with_control_codes(
     raw_lines = "\n".join(lines)
 
     prompt = _format_control_code_decorator_prompt(raw_lines)
-    # Allow overriding the model specifically for decoration via env
-    decorator_model = model or os.environ.get("GOOGLE_MODEL_DECORATOR") or os.environ.get("GOOGLE_MODEL")
-    result = call_llm_gemini(prompt=prompt, model=decorator_model, temperature=temperature)
+    decorator_model = model or get_decorator_model()
+    result = call_llm(prompt=prompt, model=decorator_model, temperature=temperature)
     return result
 
 
