@@ -451,6 +451,18 @@ def format_spotlight_prompt(
     return prompt
 
 
+def encode_image(path: str) -> tuple[str, str]:
+    """
+    Given a path to an image, return a tuple of the base64 encoded string and the mime
+    type of the image.
+    """
+    with open(path, "rb") as f:
+        img_bytes = f.read()
+    base64_image = base64.b64encode(img_bytes).decode("utf-8")
+    mime = "image/png" if path.lower().endswith(".png") else "image/jpeg"
+    return base64_image, mime
+
+
 def call_llm_gemini(prompt: str, model: Optional[str] = None, temperature: float = 1.0, max_tokens: int = 512, image_paths: Optional[List[str]] = None) -> str:
     api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
@@ -467,13 +479,11 @@ def call_llm_gemini(prompt: str, model: Optional[str] = None, temperature: float
         inline_parts: List[Any] = []
         for path in image_paths:
             try:
-                with open(path, "rb") as f:
-                    img_bytes = f.read()
-                mime = "image/png" if path.lower().endswith(".png") else "image/jpeg"
+                base64_image, mime = encode_image(path)
                 inline_parts.append({
                     "inline_data": {
                         "mime_type": mime,
-                        "data": base64.b64encode(img_bytes).decode("utf-8"),
+                        "data": base64_image,
                     }
                 })
             except Exception:
@@ -490,6 +500,86 @@ def call_llm_gemini(prompt: str, model: Optional[str] = None, temperature: float
     )
 
     return getattr(resp, "text", "") or ""
+
+
+def call_llm_openai(prompt: str, model: Optional[str] = None, temperature: float = 1.0, max_tokens: int = 512, image_paths: Optional[List[str]] = None) -> str:
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY not set in environment")
+    try:
+        from openai import OpenAI
+    except Exception as e:
+        raise RuntimeError("openai package not installed. Please install it to call OpenAI API.") from e
+
+    client = OpenAI(api_key=api_key)
+    model = model or os.environ.get("OPENAI_MODEL", "gpt-5-nano")
+
+    contents = [
+        { 
+            "type": "input_text",
+            "text": prompt
+        }
+    ]
+
+    if image_paths:
+        input_image_contents: List[dict[str, str]] = []
+        for path in image_paths:
+            try:
+                base64_image, mime = encode_image(path)
+                input_image_contents.append({
+                    "type": "input_image",
+                    "image_url": f"data:{mime};base64,{base64_image}",
+                })
+            except Exception:
+                continue
+        if input_image_contents:
+            contents += input_image_contents
+
+
+    resp = client.responses.create(
+        model=model,
+        input=[
+            {
+                "role":"user",
+                "content": contents
+            }
+        ],
+        reasoning={ "effort": "minimal" },
+        temperature=temperature,
+    )
+
+    return resp.output_text
+
+
+def get_model_provider(model: Optional[str] = None):
+    model_provider = os.environ.get("MODEL_PROVIDER", "google").lower()
+
+    def model_starts_with(model: Optional[str], prefix: str) -> bool:
+        return model and model.lower().startswith(prefix.lower())
+
+    if (
+        (model_starts_with(model, "gemini") or model_provider == "google")
+        and os.environ.get("GOOGLE_API_KEY") is not None
+    ):
+        return "google"
+    elif (
+        (model_starts_with(model, "openai") or model_provider == "openai")
+        and os.environ.get("OPENAI_API_KEY") is not None
+    ):
+        return "openai"
+    else:
+        raise RuntimeError("Must define either GOOGLE_API_KEY or OPENAI_API_KEY in environment")
+
+
+def call_llm(prompt: str, model: Optional[str] = None, temperature: float = 1.0, max_tokens: int = 512, image_paths: Optional[List[str]] = None) -> str:
+    model_provider = get_model_provider(model)
+
+    if model_provider == "google":
+        return call_llm_gemini(prompt=prompt, model=model, temperature=temperature, image_paths=image_paths)
+    elif model_provider == "openai":
+        return call_llm_openai(prompt=prompt, model=model, temperature=temperature, image_paths=image_paths)
+    else:
+        raise ValueError("Invalid model provider")
 
 
 def _format_control_code_decorator_prompt(raw_lines: str) -> str:
@@ -543,6 +633,16 @@ def _format_control_code_decorator_prompt(raw_lines: str) -> str:
     return f"Input lines (verbatim):\n{raw_lines}\n\nInstructions:\n{guidelines}\n\nNow return the decorated lines in order:"
 
 
+def get_decorator_model() -> Optional[str]:
+    # Allow overriding the model specifically for decoration via env
+    model_provider = get_model_provider()
+    if model_provider == "google":
+        return os.environ.get("GOOGLE_MODEL_DECORATOR") or os.environ.get("GOOGLE_MODEL")
+    elif model_provider == "openai":
+        return os.environ.get("OPENAI_MODEL_DECORATOR") or os.environ.get("OPENAI_MODEL")
+    return None
+
+
 def decorate_dialogue_with_control_codes(
     text: str,
     model: Optional[str] = None,
@@ -559,9 +659,8 @@ def decorate_dialogue_with_control_codes(
     raw_lines = "\n".join(lines)
 
     prompt = _format_control_code_decorator_prompt(raw_lines)
-    # Allow overriding the model specifically for decoration via env
-    decorator_model = model or os.environ.get("GOOGLE_MODEL_DECORATOR") or os.environ.get("GOOGLE_MODEL")
-    result = call_llm_gemini(prompt=prompt, model=decorator_model, temperature=temperature)
+    decorator_model = model or get_decorator_model()
+    result = call_llm(prompt=prompt, model=decorator_model, temperature=temperature)
     return result
 
 
@@ -600,7 +699,7 @@ def generate_dialogue(
     )
     if dry_run:
         return prompt
-    base = call_llm_gemini(prompt=prompt, model=model, image_paths=image_paths)
+    base = call_llm(prompt=prompt, model=model, image_paths=image_paths)
     if not decorate:
         result = base
     else:
@@ -648,7 +747,7 @@ def generate_spotlight_dialogue(
     )
     if dry_run:
         return prompt
-    base = call_llm_gemini(prompt=prompt, model=model, image_paths=image_paths)
+    base = call_llm(prompt=prompt, model=model, image_paths=image_paths)
     if not decorate:
         # Ensure manual control code at end
         result = base.rstrip() + LOAD_GAME_CODE
